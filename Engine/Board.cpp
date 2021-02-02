@@ -1,4 +1,6 @@
 #include "Board.h"
+#include "Snake.h"
+#include "Goal.h"
 #include <assert.h>
 
 Board::Board( Graphics& gfx )
@@ -19,6 +21,20 @@ void Board::DrawCell( const Location & loc,Color c )
 	gfx.DrawRectDim( loc.x * dimension + off_x + cellPadding,loc.y * dimension + off_y + cellPadding,dimension - cellPadding * 2,dimension - cellPadding * 2,c );
 }
 
+void Board::DrawObstacle()
+{
+	for (int y = 0; y < height; y++) 
+	{
+		for (int x = 0; x < width; x++) 
+		{
+			if (hasObstacle[y * width + x])
+			{
+				DrawCell({ x, y }, obstacleColor);
+			}
+		}
+	}
+}
+
 int Board::GetGridWidth() const
 {
 	return width;
@@ -27,6 +43,27 @@ int Board::GetGridWidth() const
 int Board::GetGridHeight() const
 {
 	return height;
+}
+
+bool Board::CheckForObstacle(const Location& loc) const
+{
+	return hasObstacle[loc.y * width + loc.x];
+}
+
+void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk, const Goal& goal)
+{
+	std::uniform_int_distribution<int> xDist(0, GetGridWidth() - 1);
+	std::uniform_int_distribution<int> yDist(0, GetGridHeight() - 1);
+
+	Location newLoc;
+	do 
+	{
+		newLoc.x = xDist(rng);
+		newLoc.y = yDist(rng);
+	} 
+	while (snk.IsInTile(newLoc) || CheckForObstacle(newLoc) || goal.GetLocation() == newLoc);
+
+	hasObstacle[newLoc.y * width + newLoc.x] = true;
 }
 
 bool Board::IsInsideBoard( const Location & loc ) const
