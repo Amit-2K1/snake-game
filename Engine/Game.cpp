@@ -30,8 +30,12 @@ Game::Game( MainWindow& wnd )
 	rng( std::random_device()() ),
 	snek( {2,2} )
 {
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < nFood; i++) {
 		brd.SpawnContent(rng, snek, 2);			//Spawn Food
+	}
+
+	for (int i = 0; i < nPoison; i++) {
+		brd.SpawnContent(rng, snek, 3);		//Spawn Poison
 	}
 	sndTitle.Play( 1.0f,1.0f );
 }
@@ -85,27 +89,31 @@ void Game::UpdateModel()
 					content == 1)
 				{
 					gameIsOver = true;
-					sndFart.Play();
+					sndFart.Play(rng, 1.2f);
 					sndMusic.StopAll();
+				}
+				else if(content == 2)
+				{
+					snek.GrowAndMoveBy( delta_loc );
+					brd.ConsumeContent(next);
+					brd.SpawnContent( rng,snek, 2 );		//Spawn Food
+					brd.SpawnContent(rng, snek, 1);			//Spawn Obstacle
+					sfxEat.Play( rng,0.8f );
+				}
+				else if (content == 3)
+				{
+					snek.MoveBy(delta_loc);
+					brd.ConsumeContent(next);
+					brd.SpawnContent(rng, snek, 3);
+					snekMovePeriod = std::max(snekMovePeriod * snekSpeedupFactor, snekMovePeriodMin);
+					sndFart.Play(rng, 0.6f);
 				}
 				else
 				{
-					if(content == 2)
-					{
-						snek.GrowAndMoveBy( delta_loc );
-						brd.ConsumeContents(next);
-						brd.SpawnContent( rng,snek, 2 );		//Spawn Food
-						brd.SpawnContent(rng, snek, 1);			//Spawn Obstacle
-						sfxEat.Play( rng,0.8f );
-					}
-					else
-					{
-						snek.MoveBy(delta_loc);
-						sfxSlither.Play(rng, 0.08f);
-					}
+					snek.MoveBy(delta_loc);
+					sfxSlither.Play(rng, 0.08f);
 				}
 			}
-			snekMovePeriod = std::max(snekMovePeriod - dt * snekMovePeriodMin, snekMovePeriodMin);
 		}
 	}
 	else
