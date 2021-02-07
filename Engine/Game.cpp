@@ -31,7 +31,7 @@ Game::Game( MainWindow& wnd )
 	snek( {2,2} )
 {
 	for (int i = 0; i < 10; i++) {
-		brd.SpawnFood(rng, snek);
+		brd.SpawnContent(rng, snek, 2);			//Spawn Food
 	}
 	sndTitle.Play( 1.0f,1.0f );
 }
@@ -94,8 +94,8 @@ void Game::UpdateModel()
 					{
 						snek.GrowAndMoveBy( delta_loc );
 						brd.ConsumeContents(next);
-						brd.SpawnFood( rng,snek );
-						brd.SpawnObstacle(rng, snek);
+						brd.SpawnContent( rng,snek, 2 );		//Spawn Food
+						brd.SpawnContent(rng, snek, 1);			//Spawn Obstacle
 						sfxEat.Play( rng,0.8f );
 					}
 					else

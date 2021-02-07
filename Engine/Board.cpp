@@ -41,7 +41,7 @@ void Board::ConsumeContents(const Location& loc)
 	hasContents[loc.y * width + loc.x] = 0;
 }
 
-void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk)
+void Board::SpawnContent(std::mt19937 rng, const Snake& snk, int contentType)
 {
 	std::uniform_int_distribution<int> xDist(0, GetGridWidth() - 1);
 	std::uniform_int_distribution<int> yDist(0, GetGridHeight() - 1);
@@ -54,23 +54,9 @@ void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk)
 	} 
 	while (snk.IsInTile(newLoc) || GetContent( newLoc ) != 0 );
 
-	hasContents[newLoc.y * width + newLoc.x] = 1;
+	hasContents[newLoc.y * width + newLoc.x] = contentType;
 }
 
-void Board::SpawnFood(std::mt19937 rng, const Snake& snk)
-{
-	std::uniform_int_distribution<int> xDist(0, GetGridWidth() - 1);
-	std::uniform_int_distribution<int> yDist(0, GetGridHeight() - 1);
-
-	Location newLoc;
-	do
-	{
-		newLoc.x = xDist(rng);
-		newLoc.y = yDist(rng);
-	} while (snk.IsInTile(newLoc) || GetContent(newLoc) != 0);
-
-	hasContents[newLoc.y * width + newLoc.x] = 2;
-}
 
 bool Board::IsInsideBoard( const Location & loc ) const
 {
