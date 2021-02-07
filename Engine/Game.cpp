@@ -28,9 +28,11 @@ Game::Game( MainWindow& wnd )
 	gfx( wnd ),
 	brd( gfx ),
 	rng( std::random_device()() ),
-	snek( {2,2} ),
-	goal( rng,brd,snek )
+	snek( {2,2} )
 {
+	for (int i = 0; i < 10; i++) {
+		brd.SpawnFood(rng, snek);
+	}
 	sndTitle.Play( 1.0f,1.0f );
 }
 
@@ -77,9 +79,10 @@ void Game::UpdateModel()
 			{
 				snekMoveCounter -= snekModifiedMovePeriod;
 				const Location next = snek.GetNextHeadLocation( delta_loc );
+				const int content = brd.GetContent(next);
 				if( !brd.IsInsideBoard( next ) ||
 					snek.IsInTileExceptEnd( next ) ||
-					brd.CheckForObstacle( next ) )
+					content == 1)
 				{
 					gameIsOver = true;
 					sndFart.Play();
@@ -87,18 +90,19 @@ void Game::UpdateModel()
 				}
 				else
 				{
-					if( next == goal.GetLocation() )
+					if(content == 2)
 					{
 						snek.GrowAndMoveBy( delta_loc );
-						goal.Respawn( rng,brd,snek );
-						brd.SpawnObstacle(rng, snek, goal);
+						brd.ConsumeContents(next);
+						brd.SpawnFood( rng,snek );
+						brd.SpawnObstacle(rng, snek);
 						sfxEat.Play( rng,0.8f );
 					}
 					else
 					{
-						snek.MoveBy( delta_loc );
+						snek.MoveBy(delta_loc);
+						sfxSlither.Play(rng, 0.08f);
 					}
-					sfxSlither.Play( rng,0.08f );
 				}
 			}
 			snekMovePeriod = std::max(snekMovePeriod - dt * snekMovePeriodMin, snekMovePeriodMin);
@@ -119,13 +123,12 @@ void Game::ComposeFrame()
 	if( gameIsStarted )
 	{
 		snek.Draw( brd );
-		goal.Draw( brd );
+		brd.DrawContents();
 		if( gameIsOver )
 		{
 			SpriteCodex::DrawGameOver( 350,265,gfx );
 		}
 		brd.DrawBorder();
-		brd.DrawObstacle();
 	}
 	else
 	{

@@ -1,6 +1,5 @@
 #include "Board.h"
 #include "Snake.h"
-#include "Goal.h"
 #include <assert.h>
 
 Board::Board( Graphics& gfx )
@@ -21,20 +20,6 @@ void Board::DrawCell( const Location & loc,Color c )
 	gfx.DrawRectDim( loc.x * dimension + off_x + cellPadding,loc.y * dimension + off_y + cellPadding,dimension - cellPadding * 2,dimension - cellPadding * 2,c );
 }
 
-void Board::DrawObstacle()
-{
-	for (int y = 0; y < height; y++) 
-	{
-		for (int x = 0; x < width; x++) 
-		{
-			if (hasObstacle[y * width + x])
-			{
-				DrawCell({ x, y }, obstacleColor);
-			}
-		}
-	}
-}
-
 int Board::GetGridWidth() const
 {
 	return width;
@@ -45,12 +30,18 @@ int Board::GetGridHeight() const
 	return height;
 }
 
-bool Board::CheckForObstacle(const Location& loc) const
+int Board::GetContent(const Location& loc) const
 {
-	return hasObstacle[loc.y * width + loc.x];
+	return hasContents[loc.y * width + loc.x];
 }
 
-void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk, const Goal& goal)
+void Board::ConsumeContents(const Location& loc)
+{
+	assert( GetContent(loc) == 2 );
+	hasContents[loc.y * width + loc.x] = 0;
+}
+
+void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk)
 {
 	std::uniform_int_distribution<int> xDist(0, GetGridWidth() - 1);
 	std::uniform_int_distribution<int> yDist(0, GetGridHeight() - 1);
@@ -61,9 +52,24 @@ void Board::SpawnObstacle(std::mt19937 rng, const Snake& snk, const Goal& goal)
 		newLoc.x = xDist(rng);
 		newLoc.y = yDist(rng);
 	} 
-	while (snk.IsInTile(newLoc) || CheckForObstacle(newLoc) || goal.GetLocation() == newLoc);
+	while (snk.IsInTile(newLoc) || GetContent( newLoc ) != 0 );
 
-	hasObstacle[newLoc.y * width + newLoc.x] = true;
+	hasContents[newLoc.y * width + newLoc.x] = 1;
+}
+
+void Board::SpawnFood(std::mt19937 rng, const Snake& snk)
+{
+	std::uniform_int_distribution<int> xDist(0, GetGridWidth() - 1);
+	std::uniform_int_distribution<int> yDist(0, GetGridHeight() - 1);
+
+	Location newLoc;
+	do
+	{
+		newLoc.x = xDist(rng);
+		newLoc.y = yDist(rng);
+	} while (snk.IsInTile(newLoc) || GetContent(newLoc) != 0);
+
+	hasContents[newLoc.y * width + newLoc.x] = 2;
 }
 
 bool Board::IsInsideBoard( const Location & loc ) const
@@ -71,6 +77,25 @@ bool Board::IsInsideBoard( const Location & loc ) const
 	return loc.x >= 0 && loc.x < width &&
 		loc.y >= 0 && loc.y < height;
 }
+
+void Board::DrawContents()
+{
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			const int content = GetContent({ x, y });
+			if (content == 1)
+			{
+				DrawCell({ x, y }, obstacleColor);
+			}
+			else if (content == 2) {
+				DrawCell({ x, y }, foodColor);
+			}
+		}
+	}
+}
+
 
 void Board::DrawBorder()
 {
