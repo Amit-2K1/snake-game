@@ -7,13 +7,21 @@
 class Board
 {
 public:
+	enum class CellContents {
+		Empty = 0,
+		Obstacle,
+		Food,
+		Poison
+	};
+
+public:
 	Board( Graphics& gfx );
 	void DrawCell( const Location& loc,Color c );
 	int GetGridWidth() const;
 	int GetGridHeight() const;
-	int GetContent(const Location& loc) const;
+	Board::CellContents GetContent(const Location& loc) const;
 	void ConsumeContent(const Location& loc);
-	void SpawnContent(std::mt19937 rng, const class Snake& snk, int contentType);
+	void SpawnContent(std::mt19937 rng, const class Snake& snk, CellContents contentType);
 	bool IsInsideBoard( const Location& loc ) const;
 	void DrawContents();
 	void DrawBorder();
@@ -30,7 +38,7 @@ private:
 	static constexpr int borderPadding = 2;
 	static constexpr int x = 70;
 	static constexpr int y = 50;
-	//0 -> empty 1 -> obstacle 2 -> food 3 -> poison
-	int hasContents[width * height] = { 0 };
 	Graphics& gfx;
+
+	CellContents hasContents[height * width] = { CellContents::Empty };
 };
